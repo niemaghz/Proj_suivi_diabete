@@ -4,11 +4,15 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
+ * @UniqueEntity(fields={"email"}, message="There is already an account with this email")
  */
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     /**
      * @ORM\Id
@@ -18,77 +22,131 @@ class User
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $firstname;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $lastname;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $gender;
-
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $dob;
-
-    /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=180, unique=true)
      */
     private $email;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="json")
      */
-    private $pwd;
+    private $roles = [];
 
     /**
-     * @ORM\Column(type="datetime")
+     * @var string The hashed password
+     * @ORM\Column(type="string")
      */
-    private $creationDate;
+    private $password;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $username;
+
+    /**
+     * @ORM\Column(type="date")
+     */
+    private $dob;
+
+    /*
+     * @var \DateTime
+     * @Gedmo\Mapping\Annotation\Timestampable(on="create")
+     * @ORM\Column(type="datetime_immutable")
+     */
+    
+    private $created_at;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getFirstname(): ?string
+    public function getEmail(): ?string
     {
-        return $this->firstname;
+        return $this->email;
     }
 
-    public function setFirstname(string $firstname): self
+    public function setEmail(string $email): self
     {
-        $this->firstname = $firstname;
+        $this->email = $email;
 
         return $this;
     }
 
-    public function getLastname(): ?string
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
     {
-        return $this->lastname;
+        return (string) $this->email;
     }
 
-    public function setLastname(string $lastname): self
+    /**
+     * @deprecated since Symfony 5.3, use getUserIdentifier instead
+     */
+    public function getUsername(): string
     {
-        $this->lastname = $lastname;
+        return (string) $this->email;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
 
         return $this;
     }
 
-    public function getGender(): ?string
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
     {
-        return $this->gender;
+        return $this->password;
     }
 
-    public function setGender(string $gender): self
+    public function setPassword(string $password): self
     {
-        $this->gender = $gender;
+        $this->password = $password;
+
+        return $this;
+    }
+
+    /**
+     * Returning a salt is only needed, if you are not using a modern
+     * hashing algorithm (e.g. bcrypt or sodium) in your security.yaml.
+     *
+     * @see UserInterface
+     */
+    public function getSalt(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials()
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
+    }
+
+    public function setUsername(string $username): self
+    {
+        $this->username = $username;
 
         return $this;
     }
@@ -105,38 +163,14 @@ class User
         return $this;
     }
 
-    public function getEmail(): ?string
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->email;
+        return $this->created_at;
     }
 
-    public function setEmail(string $email): self
+    public function setCreatedAt(\DateTimeImmutable $created_at): self
     {
-        $this->email = $email;
-
-        return $this;
-    }
-
-    public function getPwd(): ?string
-    {
-        return $this->pwd;
-    }
-
-    public function setPwd(string $pwd): self
-    {
-        $this->pwd = $pwd;
-
-        return $this;
-    }
-
-    public function getCreationDate(): ?\DateTimeInterface
-    {
-        return $this->creationDate;
-    }
-
-    public function setCreationDate(\DateTimeInterface $creationDate): self
-    {
-        $this->creationDate = $creationDate;
+        $this->created_at = $created_at;
 
         return $this;
     }
